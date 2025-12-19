@@ -26,17 +26,17 @@ def CP_opt(job_list,setup_time,machines,tc_list,dc):
 
     for i in range(1,job_number+1):
         if job_list[i-1].agent=="A":
-            tar[i]=integer_var(name='T_{}'.format(i), min=0, max=5000)
+            tar[i]=integer_var(name='T_{}'.format(i), min=0, max=50000)
 
         for j in range(1,machines+1):
-            job[i, j] = interval_var(name='x_{}_{}'.format(i, j), start=(0, 2000), end=(0, 2000), optional=True,
+            job[i, j] = interval_var(name='x_{}_{}'.format(i, j), start=(0, 2000), end=(0, 20000), optional=True,
                              size=(0, job_list[i-1].total_time[j-1]))
 
             u[i, j] = integer_var(name='u_{}_{}'.format(i, j), min=0, max=job_list[i - 1].amount)
 
 
     for j in range(1,machines+1): #create dummy orders for each machine
-        a = interval_var(name='x_{}_{}'.format(0, j), start=0, end=(0, 2000), size=0)
+        a = interval_var(name='x_{}_{}'.format(0, j), start=0, end=(0, 20000), size=0)
         job[0, j] = a
 
     for i in range(1,job_number+1):
