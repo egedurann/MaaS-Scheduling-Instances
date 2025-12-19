@@ -68,8 +68,6 @@ def CP_opt(job_list,setup_time,machines,tc_list,dc):
             for j in range(1,machines+1):
                 model.add(tar[i] >= end_of(job[i, j])+presence_of(job[i,j])*element(tc_list,(z[i-1]-1)*machines+j-1) - job_list[i-1].due_date)
 
-
-
     for i in range(1,job_number+1):
         if job_list[i-1].agent == "B":
             for j in range(1,machines+1):
@@ -154,6 +152,7 @@ for ins in instances:
         "Gap":gap
 
     })
+
 
 file_path = 'results_cp.txt'
 # Open the file in write mode and use CSV formatting
