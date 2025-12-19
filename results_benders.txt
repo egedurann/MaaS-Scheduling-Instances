@@ -1,0 +1,2 @@
+Instance	Machines	DC	Obj	Tardiness	Makespan	Solve Time	iteration	Run Time	Total Iteration
+10	2	1	25.6	16	64	0.5957663059234619	7	0.5957663059234619	7

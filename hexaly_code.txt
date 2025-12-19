@@ -1,0 +1,13 @@
+
+        'Instance': instances.index(ins) + 1,
+            'order': order_no,
+            "job no": number_job,
+            "Assigned job": len(ins) - order_no,
+            "Machine_no":machines,
+            "DC": dc,
+            "Obj": obj,
+            "Tardiness:": Tardiness,
+            "Makespan": ms,
+            'Solve Time': run_time,
+            "Gap":gap
+        
