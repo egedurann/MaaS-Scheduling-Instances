@@ -1,0 +1,68 @@
+"""
+15 small, hand-built (fully deterministic - no RNG) scheduling instances used
+to compare CP Optimizer (exact) against the two Hexaly formulations
+(before/after the optional-interval refactor) under a matched time limit.
+
+Each instance is a tuple: (job_list, setup_time, machines, tc, dc)
+  - job_list: list of data.Job
+  - setup_time: list (per machine) of (orders+1) x (orders+1) matrices
+  - machines: number of machines
+  - tc: transit-cost matrix, shape (dc, machines)
+  - dc: number of distribution centers (== len(tc))
+
+Sizes are kept small on purpose (3-5 orders, 2-3 machines, amounts 1-3) so
+they are tractable for all three solvers. Every instance has exactly one
+agent-C job (fixed machine + deadline), and a mix of agent-A/agent-B jobs
+whose count/process-times/due-dates/transit-costs vary deterministically
+with the instance index k, so the whole set is reproducible without storing
+random state.
+"""
+from data import Job
+
+
+def _uniform_setup(orders, machines, off_diag=2, diag=100):
+    setup = []
+    for m in range(machines):
+        mat = [[off_diag] * (orders + 1) for _ in range(orders + 1)]
+        for i in range(orders + 1):
+            mat[i][i] = diag
+            mat[i][0] = diag  # dummy column
+        setup.append(mat)
+    return setup
+
+
+def make_instance(k):
+    machines = 2 + (k % 2)              # alternates 2, 3
+    dc = 1 + (k % 3)                    # cycles 1, 2, 3
+    n_ab = 2 + (k % 3)                  # 2..4 non-C orders
+    n_a = (n_ab + 1) // 2
+    n_b = n_ab - n_a
+
+    jobs = []
+    for j in range(n_a):
+        pt = [2 + ((k + j + m) % 3) for m in range(machines)]
+        amount = 1 + ((k + j) % 3)
+        due = 15 + 3 * k + 2 * j
+        jobs.append(Job(job_id=f"{j+1}_A", amount=amount, process_time=pt,
+                         total_time=[p * amount for p in pt], due_date=due,
+                         agent="A", assigned_machine=0, completion_time=0))
+    for j in range(n_b):
+        pt = [2 + ((k + n_a + j + m) % 3) for m in range(machines)]
+        amount = 1 + ((k + n_a + j) % 3)
+        jobs.append(Job(job_id=f"{j+1}_B", amount=amount, process_time=pt,
+                         total_time=[p * amount for p in pt], due_date=0,
+                         agent="B", assigned_machine=0, completion_time=0))
+
+    pt_c = [1 + ((k + m) % 2) for m in range(machines)]
+    assigned_machine = 1 + (k % machines)
+    deadline = 8 + k
+    jobs.append(Job(job_id="1_C", amount=1, process_time=pt_c, total_time=pt_c,
+                     due_date=0, agent="C", assigned_machine=assigned_machine,
+                     completion_time=deadline))
+
+    tc = [[25 + 5 * d + 3 * m + k for m in range(machines)] for d in range(dc)]
+    setup_time = _uniform_setup(len(jobs), machines)
+    return jobs, setup_time, machines, tc, dc
+
+
+INSTANCES = [make_instance(k) for k in range(15)]
