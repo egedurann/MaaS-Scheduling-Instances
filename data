@@ -38,7 +38,7 @@ def data_read(seed=None):
     setup_instances = []
     machines = []
 
-    order = 46  # Initial number of orders
+    order = 10  # Initial number of orders
     dc = [[1, 2, 3], [1, 2, 3]]  # Distribution centers configuration
     job_no = 10  # Initial job amount
 
@@ -107,8 +107,10 @@ def data_read(seed=None):
                     # Calculate average makespan for this machine
                     avg_makespan = total_makespan[machine_idx] / machine_no
 
-                    # For Agent C jobs, use deadlines (not exact completion times)
-                    # This gives the solver flexibility to find feasible sequences
+                    # Agent C jobs are pre-booked with exact completion times.
+                    # Each one starts at least 5 after the previous one ends
+                    # (setup times are at most 3), so the bookings never conflict.
+                    prev_end = 0
                     for job_idx in range(num_scheduled):
                         job_id = f"{agent_c_id}_C"
                         agent_c_id += 1
@@ -120,9 +122,12 @@ def data_read(seed=None):
                         # Earlier jobs get earlier deadlines, but with buffer
                         position_factor = (job_idx + 1) / num_scheduled
 
-                        # Deadline: distribute across expected makespan with buffer
-                        deadline = int(avg_makespan * position_factor * 1.2 +
-                                       np.random.randint(10, 50))
+                        # Target end: distribute across expected makespan with buffer
+                        target_end = int(avg_makespan * position_factor * 1.2 +
+                                         np.random.randint(10, 50))
+                        completion_time = max(target_end,
+                                              prev_end + 5 + int(process_time[machine_idx]))
+                        prev_end = completion_time
 
                         job = Job(
                             job_id=job_id,
@@ -132,7 +137,7 @@ def data_read(seed=None):
                             due_date=0,
                             agent="C",
                             assigned_machine=machine_idx + 1,  # 1-indexed
-                            completion_time=deadline  # Using as deadline, not exact time
+                            completion_time=completion_time  # Exact, fixed end time
                         )
                         job_list.append(job)
 
@@ -187,7 +192,7 @@ def export_to_excel(instances, tc, filename="output.xlsx"):
                 else:
                     row = {
                         "Job ID": job.job_id,
-                        "Deadline": job.completion_time,  # Now a deadline, not exact time
+                        "Completion Time": job.completion_time,
                         "Assigned Machine": job.assigned_machine
                     }
 
